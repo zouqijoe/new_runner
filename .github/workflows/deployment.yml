@@ -1,4 +1,4 @@
-name: Deployment
+name: Manual Dispatch Workflow
 
 permissions:
   id-token: write
