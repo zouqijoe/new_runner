@@ -1,0 +1,113 @@
+name: Deployment
+
+permissions:
+  id-token: write
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      customer:
+        description: 'Customer to deploy to staging environment'
+        required: true
+        type: string
+      apps:
+        description: 'Apps to deploy (comma-separated for multiple, leave empty for all available apps)'
+        required: false
+        type: string
+
+  pull_request:
+    types: 
+      - closed
+  push:
+    branches: 
+      - main
+      - PLTF-333_CD_github
+    
+
+jobs:
+  pre-deployment:
+    runs-on: ubuntu-latest
+    outputs:
+      customer: ${{ github.event.inputs.customer }}
+      apps: ${{ github.event.inputs.apps }}
+      config: ${{ steps.save_config.outputs.config }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Generate config from state files
+        run: |
+          mkdir -p config
+          echo "customers:" > config/deploy-options.yml
+          for state_file in azure/deployment/staging/*/state.yaml; do
+            if [ -f "$state_file" ]; then
+              customer=$(yq '.tags.customer' "$state_file")
+              echo "  $customer:" >> config/deploy-options.yml
+              echo "    apps:" >> config/deploy-options.yml
+              yq '.app_configs[].name' "$state_file" | while read app; do
+                if [ ! -z "$app" ]; then
+                  echo "      - '$app'" >> config/deploy-options.yml
+                fi
+              done
+            fi
+          done
+          echo "Generated config/deploy-options.yml:"
+          cat config/deploy-options.yml
+
+      - name: Validate customer exists
+        if: github.event_name == 'workflow_dispatch'  # Only validate for manual triggers
+        run: |
+          if ! yq '.customers.${{ github.event.inputs.customer }}' config/deploy-options.yml > /dev/null 2>&1; then
+            echo "❌ Error: Customer '${{ github.event.inputs.customer }}' not found in config"
+            exit 1
+          fi
+
+      - name: Save config
+        id: save_config
+        run: |
+          echo "config<<EOF" >> $GITHUB_OUTPUT
+          cat config/deploy-options.yml >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Pre-deployment summary
+        run: |
+          echo "🔍 Pre-deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "======================" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "👤 Customer: ${{ github.event.inputs.customer }}" >> $GITHUB_STEP_SUMMARY
+            if [ -z "${{ github.event.inputs.apps }}" ]; then
+              echo "📦 Apps: All available apps" >> $GITHUB_STEP_SUMMARY
+              yq '.customers.${{ github.event.inputs.customer }}.apps[]' config/deploy-options.yml | while read app; do
+                echo "   - ${app}" >> $GITHUB_STEP_SUMMARY
+              done
+            else
+              echo "📦 Apps:" >> $GITHUB_STEP_SUMMARY
+              IFS=',' read -ra APPS <<< "${{ github.event.inputs.apps }}"
+              for app in "${APPS[@]}"; do
+                echo "   - ${app}" >> $GITHUB_STEP_SUMMARY
+              done
+            fi
+          else
+            echo "👤 Automated deployment from push event" >> $GITHUB_STEP_SUMMARY
+            echo "📦 Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  waiting-for-approval:
+    needs: pre-deployment
+    runs-on: ubuntu-latest
+    environment: deployment-approval
+    steps:
+      - run: echo "Waiting for deployment approval..."
+
+  start-deployment:
+    needs: [pre-deployment, waiting-for-approval]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deployment notification
+        run: |
+          echo "🚀 Starting deployment for customer: ${{ needs.pre-deployment.outputs.customer }}"
+          if [ -z "${{ needs.pre-deployment.outputs.apps }}" ]; then
+            echo "📦 Apps: All available apps"
+          else
+            echo "📦 Apps: ${{ needs.pre-deployment.outputs.apps }}"
+          fi
