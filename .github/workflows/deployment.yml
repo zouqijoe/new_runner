@@ -22,7 +22,7 @@ on:
   push:
     branches: 
       - main
-      - PLTF-333_CD_github
+      - test_branch
     
 
 jobs:
