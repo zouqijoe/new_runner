@@ -1,0 +1,20 @@
+customers:
+  A:
+    apps:
+      - 'app1'
+      - 'app2'
+  B:
+    apps:
+      - 'app2'
+      - 'app3'
+      - 'app4'
+  C:
+    apps:
+      - 'app1'
+      - 'app4'
+      - 'app5'
+  D:
+    apps:
+      - 'app3'
+      - 'app5'
+  # ... add other customers and their available apps

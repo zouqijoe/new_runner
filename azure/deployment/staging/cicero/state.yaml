@@ -1,0 +1,76 @@
+# This file is used to configure the deployment for the customer in a specific environment.
+# The purpose is to deploy the contract review application with the specified settings.
+# The settings include the region, workload profile, docker registry config, and app configs.
+# Warning: Please review the Image name(s) and corresponding tag(s) before deploying
+
+tags:
+  customer: cicero
+  env: staging
+  env_name: staging
+  owner: Platform
+  purpose: "Cicero staging deployment"
+region: westus
+extra_workload_profile:
+  name: "D4"
+  workload_profile_type: "D4"
+  minimum_count: 2
+  maximum_count: 5
+docker_registry_config:
+  name: "devunified"
+  resource_group: cicero-dev
+elasticsearch_config:
+  hot_content_size: 1g
+  # set to atleast 2 to avoid data loss
+  replicas: 1
+app_configs:
+  - name: contract-unified
+    image:
+      name: contract_unified
+      tag: auto-8bf802a00bc0c9faf8cc6ffe295ad61debc62352
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+
+  - name: "struct-extract"
+    image:
+      name: structured_extraction
+      tag: auto-8bf802a00bc0c9faf8cc6ffe295ad61debc62352
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+      - name: REDIS_HOST
+        value: cicero-dev.redis.cache.windows.net
+
+  - name: "dialog-api"
+    image:
+      name: dialog
+      tag: auto-8bf802a00bc0c9faf8cc6ffe295ad61debc62352
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+
+  - name: "node-api"
+    image:
+      name: node_api_v2
+      tag: auto-8bf802a00bc0c9faf8cc6ffe295ad61debc62352
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+      - name: NUM_WORKERS
+        value: "1"
+
+  - name: docx
+    image:
+      name: docx_handler
+      tag: auto-2110644ed7d4fc1a06935ffbaa7baa01bb91a263
+    enable_jwt_auth: false
+    target_port: 8080
+
+  - name: "insights-and-qa"
+    image:
+      name: insights_and_qa
+      tag: auto-8bf802a00bc0c9faf8cc6ffe295ad61debc62352
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+

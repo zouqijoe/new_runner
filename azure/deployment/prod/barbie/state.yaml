@@ -1,0 +1,92 @@
+tags:
+  customer: barbie
+  env: prod
+  env_name: prod
+  owner: ECMS
+  purpose: ECMS prod deployment
+region: westus
+extra_workload_profile:
+  name: "D4"
+  workload_profile_type: "D4"
+  minimum_count: 3
+  maximum_count: 5
+elasticsearch_config:
+  hot_content_size: 1g
+  # set to atleast 2 to avoid data loss
+  replicas: 1
+docker_registry_config:
+  name: "produnified"
+  resource_group: "cicero-prod-common"
+app_configs:
+  - name: contract-unified
+    image:
+      name: contract_unified
+      tag: auto-c85233f328f7dfad217a07ba6a0553290804114d
+    env_vars:
+      - name: CUSTOMER_CONTEXT
+        value: "ECMS"
+      - name: CUSTOMER_LEGAL_ENTITY_NAME
+        value: "ECMS"
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+    min_replicas: 2
+    max_replicas: 8
+    workload_profile_name: D4
+    memory: 16Gi
+  - name: dialog-api
+    image:
+      name: dialog
+      tag: auto-8bf802a00bc0c9faf8cc6ffe295ad61debc62352
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+      - name: NUM_WORKERS
+        value: "2"
+  - name: "struct-extract"
+    image:
+      name: structured_extraction
+      tag: auto-8bf802a00bc0c9faf8cc6ffe295ad61debc62352
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+      - name: NUM_WORKERS
+        value: "1"
+      - name: REDIS_HOST
+        value: "cicero-dev.redis.cache.windows.net"
+  - name: "insights-and-qa"
+    image:
+      name: insights_and_qa
+      tag: auto-8bf802a00bc0c9faf8cc6ffe295ad61debc62352
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+      - name: NUM_WORKERS
+        value: "1"
+      - name: REDIS_HOST
+        value: "cicero-dev.redis.cache.windows.net"
+  - name: docx
+    image:
+      name: docx-apis
+      tag: v2.30
+    enable_jwt_auth: false
+    target_port: 8080
+
+  - name: "node-api"
+    image:
+      name: node_api_v2
+      tag: auto-8bf802a00bc0c9faf8cc6ffe295ad61debc62352
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+      - name: NUM_WORKERS
+        value: "1"
+      - name: USE_DOCLING
+        value: "true"
+      - name: OMP_THREAD_LIMIT
+        value: "8"
+      - name: OMP_NUM_THREADS
+        value: "4"
+    workload_profile_name: "D4"
+    memory: "16Gi"
+    min_replicas: "1"
+    max_replicas: "5"

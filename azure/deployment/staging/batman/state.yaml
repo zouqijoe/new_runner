@@ -1,0 +1,36 @@
+# This file is used to configure the deployment for the customer in a specific environment.
+# The purpose is to deploy the contract review application and the Airflow pipeline's backend with the specified settings.
+# The settings include the region, workload profile, docker registry config, and app configs.
+# Warning: Please review the Image name(s) and corresponding tag(s) before deploying
+
+tags:
+  customer: batman
+  env: staging
+  env_name: staging
+  owner: batman
+  purpose: "batman staging deployment"
+region: westus
+extra_workload_profile:
+  name: "D4"
+  workload_profile_type: "D4"
+  minimum_count: 1
+  maximum_count: 5
+docker_registry_config:
+  name: "devunified"
+  resource_group: cicero-dev
+app_configs:
+  - name: contract-unified
+    image:
+      name: contract_unified
+      tag: auto-beb19e57086e9e9576d2526123911473eb84eec4
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+      - name: NUM_WORKERS
+        value: "2"
+  - name: docx
+    image:
+      name: docx-apis
+      tag: v2.30
+    enable_jwt_auth: false
+    target_port: 8080

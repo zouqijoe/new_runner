@@ -1,0 +1,50 @@
+tags:
+  customer: snoopy
+  env: prod
+  env_name: prod
+  owner: Snoopy
+  purpose: Snoopy prod deployment
+region: westus
+extra_workload_profile:
+  name: "D4"
+  workload_profile_type: "D4"
+  minimum_count: 3
+  maximum_count: 5
+# minimize ES resources, without actually removing it
+elasticsearch_config:
+  hot_content_size: 1g
+  # set to atleast 2 to avoid data loss
+  replicas: 1
+db_sku_name: GP_Standard_D4ads_v5
+docker_registry_config:
+  name: "produnified"
+  resource_group: "cicero-prod-common"
+app_configs:
+  - name: contract-unified
+    image:
+      name: contract_unified
+      tag: auto-c85233f328f7dfad217a07ba6a0553290804114d
+    env_vars:
+      - name: CUSTOMER_CONTEXT
+        value: "Southwest Airlines"
+      - name: CUSTOMER_LEGAL_ENTITY_NAME
+        value: "Southwest Airlines"
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+    min_replicas: 1
+    max_replicas: 8
+    workload_profile_name: D4
+    memory: 16Gi
+  - name: dialog-api
+    image:
+      name: dialog
+      tag: auto-8bf802a00bc0c9faf8cc6ffe295ad61debc62352
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+  - name: docx
+    image:
+      name: docx_handler
+      tag: auto-2110644ed7d4fc1a06935ffbaa7baa01bb91a263
+    enable_jwt_auth: false
+    target_port: 8080

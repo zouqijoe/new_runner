@@ -1,0 +1,33 @@
+# This file is used to configure the deployment for the customer in a specific environment.
+# The purpose is to deploy the contract review application with the specified settings.
+# The settings include the region, workload profile, docker registry config, and app configs.
+# Warning: Please review the Image name(s) and corresponding tag(s) before deploying
+
+tags:
+  customer: catdog
+  env: dev
+  env_name: dev
+  owner: catdog
+  purpose: "catdog dev deployment"
+region: westus
+extra_workload_profile:
+  name: "D4"
+  workload_profile_type: "D4"
+  minimum_count: 3
+  maximum_count: 5
+# minimize ES resources, without actually removing it
+elasticsearch_config:
+  hot_content_size: 1g
+  # set to atleast 2 to avoid data loss
+  replicas: 2
+docker_registry_config:
+  name: "devunified"
+  resource_group: cicero-dev
+app_configs:
+  - name: node-api
+    image:
+      name: node-api-unified
+      tag: v2.0
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"

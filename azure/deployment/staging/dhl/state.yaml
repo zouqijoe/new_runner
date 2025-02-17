@@ -1,0 +1,90 @@
+# This file is used to configure the deployment for the customer in a specific environment.
+# The purpose is to deploy the contract review application with the specified settings.
+# The settings include the region, workload profile, docker registry config, and app configs.
+# Warning: Please review the Image name(s) and corresponding tag(s) before deploying
+
+tags:
+  customer: dhl
+  env: staging
+  env_name: staging
+  owner: dhl
+  purpose: "dhl staging deployment"
+region: westus
+extra_workload_profile:
+  name: "D4"
+  workload_profile_type: "D4"
+  minimum_count: 3
+  maximum_count: 5
+# minimize ES resources, without actually removing it
+elasticsearch_config:
+  hot_content_size: 1g
+  # set to atleast 2 to avoid data loss
+  replicas: 1
+docker_registry_config:
+  name: "devunified"
+  resource_group: cicero-dev
+app_configs:
+  - name: contract-unified
+    image:
+      name: contract-unified-rest-server
+      tag: v2.2
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+  
+  - name: dialog-api
+    image:
+      name: dialog-api
+      tag: v1.6
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+
+  - name: docx
+    image:
+      name: docx_handler
+      tag: auto-2110644ed7d4fc1a06935ffbaa7baa01bb91a263
+    enable_jwt_auth: false
+    target_port: 8080
+
+  - name: "node-api"
+    image:
+      name: node-api-unified
+      tag: refactor-pr-4
+    
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+      - name: NUM_WORKERS
+        value: "1"
+      - name: USE_DOCLING
+        value: "true"
+      - name: OMP_THREAD_LIMIT
+        value: "8"
+      - name: OMP_NUM_THREADS
+        value: "4"
+      
+
+  - name: "insights-and-qa"
+    image:
+      name: insights_and_qa
+      tag: auto-c85233f328f7dfad217a07ba6a0553290804114d
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+      - name: NUM_WORKERS
+        value: "2"
+      - name: REDIS_HOST
+        value: cicero-dev.redis.cache.windows.net
+
+  - name: "struct-extract"
+    image:
+      name: structured_extraction
+      tag: auto-c85233f328f7dfad217a07ba6a0553290804114d
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+      - name: REDIS_HOST
+        value: cicero-dev.redis.cache.windows.net
+      - name: NUM_WORKERS
+        value: "1"

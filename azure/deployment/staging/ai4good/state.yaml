@@ -1,0 +1,25 @@
+# This file is used to configure the deployment for the customer in a specific environment.
+# The purpose is to deploy the contract review application with the specified settings.
+# The settings include the region, workload profile, docker registry config, and app configs.
+# Warning: Please review the Image name(s) and corresponding tag(s) before deploying
+
+tags:
+  customer: ai4good
+  env: staging
+  env_name: staging
+  owner: Haren/Kartik
+  purpose: "AI for Good staging deployment"
+region: westus
+docker_registry_config:
+  name: "devunified"
+  resource_group: cicero-dev
+app_configs:
+  - name: "unified"
+    image:
+      name: unified
+      tag: main-20250211.0734-83c4a89
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+      - name: REDIS_HOST
+        value: cicero-dev.redis.cache.windows.net

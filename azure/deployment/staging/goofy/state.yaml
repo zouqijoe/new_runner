@@ -1,0 +1,85 @@
+# This file is used to configure the deployment for the customer in a specific environment.
+# The purpose is to deploy the contract review application and the Airflow pipeline's backend with the specified settings.
+# The settings include the region, workload profile, docker registry config, and app configs.
+
+
+tags:
+  customer: goofy
+  env: staging
+  env_name: staging
+  owner: Haren/Manish
+  purpose: "Goofy staging deployment"
+region: westus
+extra_workload_profile:
+  name: "D4"
+  workload_profile_type: "D4"
+  minimum_count: 3
+  maximum_count: 5
+docker_registry_config:
+  name: "devunified"
+  resource_group: cicero-dev
+app_configs:
+  - name: contract-unified
+    image:
+      name: contract_unified
+      tag: auto-beb19e57086e9e9576d2526123911473eb84eec4
+    min_replicas: 0 # does not need to run currently
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+
+  - name: "struct-extract"
+    image:
+      name: structured_extraction
+      tag: auto-beb19e57086e9e9576d2526123911473eb84eec4
+    min_replicas: 0 # does not need to run currently
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+      - name: REDIS_HOST
+        value: cicero-dev.redis.cache.windows.net
+      - name: NUM_WORKERS
+        value: "2"
+
+  - name: "dialog-api"
+    image:
+      name: dialog
+      tag: auto-beb19e57086e9e9576d2526123911473eb84eec4
+    min_replicas: 0 # does not need to run currently
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+      - name: NUM_WORKERS
+        value: "2"
+
+  - name: "node-api"
+    image:
+      name: node-api-unified
+      tag: docling-test-2
+    min_replicas: 0 # does not need to run currently
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+      - name: NUM_WORKERS
+        value: "2"
+        
+  - name: docx
+    image:
+      name: docx-apis
+      tag: v2.30
+    min_replicas: 0 # does not need to run currently
+    enable_jwt_auth: false
+    target_port: 8080
+
+  - name: "insights-and-qa"
+    image:
+      name: insights_and_qa
+      tag: auto-beb19e57086e9e9576d2526123911473eb84eec4
+    min_replicas: 0 # does not need to run currently
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+      - name: NUM_WORKERS
+        value: "2"
+      - name: REDIS_HOST
+        value: cicero-dev.redis.cache.windows.net

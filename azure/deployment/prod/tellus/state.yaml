@@ -1,0 +1,58 @@
+# This file is used to configure the deployment for the customer in a specific environment.
+# The purpose is to deploy the contract review application with the specified settings.
+# The settings include the region, workload profile, docker registry config, and app configs.
+# Warning: Please review the Image name(s) and corresponding tag(s) before deploying
+
+tags:
+  customer: tellus
+  env: prod
+  env_name: prod
+  owner: tellus
+  purpose: "tellus prod deployment"
+region: westus
+extra_workload_profile:
+  name: "D4"
+  workload_profile_type: "D4"
+  minimum_count: 3
+  maximum_count: 5
+# minimize ES resources, without actually removing it
+elasticsearch_config:
+  hot_content_size: 1g
+  # set to atleast 2 to avoid data loss
+  replicas: 1
+db_sku_name: GP_Standard_D4ads_v5
+docker_registry_config:
+  name: "produnified"
+  resource_group: cicero-prod-common
+app_configs:
+  - name: contract-unified
+    image:
+      name: contract-unified-rest-server
+      tag: v2.2
+    env_vars:
+      - name: CUSTOMER_CONTEXT
+        value: Tellus
+      - name: CUSTOMER_LEGAL_ENTITY_NAME
+        value: Tellus
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+    min_replicas: 2
+    max_replicas: 8
+    workload_profile_name: D4
+    memory: 16Gi
+
+  - name: dialog-api
+    image:
+      name: dialog-api
+      tag: v1.6
+    env_vars:
+      - name: USE_MANAGED_MIGRATION
+        value: "true"
+
+  - name: docx
+    image:
+      name: docx-apis
+      tag: v2.24
+    enable_jwt_auth: false
+    target_port: 8080
+
